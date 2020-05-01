@@ -15,13 +15,13 @@ spec:
       imagePullSecrets:
       - name: github-registry
       containers:
-      - image: docker.pkg.github.com/hugomd/kutt/kutt:<VERSION>
+      - image: docker.pkg.github.com/hugomd/kutt/kutt:latest
         name: kutt
         ports:
         - containerPort: 3000
         env:
           - name: PORT
-            value: 3000
+            value: "3000"
           - name: SITE_NAME
             value: "Kutt"
           - name: DEFAULT_DOMAIN
@@ -51,12 +51,42 @@ spec:
               secretKeyRef:
                 name: config
                 key: DB_PASSWORD
+          - name: RECAPTCHA_SITE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: config
+                key: RECAPTCHA_SITE_KEY
+          - name: RECAPTCHA_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: config
+                key: RECAPTCHA_SECRET_KEY
+          - name: MAIL_HOST
+            valueFrom:
+              secretKeyRef:
+                name: config
+                key: MAIL_HOST
+          - name: MAIL_PORT
+            valueFrom:
+              secretKeyRef:
+                name: config
+                key: MAIL_PORT
+          - name: MAIL_USER
+            valueFrom:
+              secretKeyRef:
+                name: config
+                key: MAIL_USER
+          - name: MAIL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: config
+                key: MAIL_PASSWORD
           - name: DB_SSL
-            value: true
+            value: "true"
           - name: REDIS_HOST
             value: "localhost"
           - name: REDIS_PORT
-            value: 6379
+            value: "6379"
           - name: REDIS_PASSWORD
             value: ""
           - name: JWT_SECRET
