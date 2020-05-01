@@ -24,7 +24,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: docker login -u hugomd -p $GITHUB_TOKEN docker.pkg.github.com
       
-    - name: Push image to Docker Hub
+    - name: Push image to GitHub Packages
       run: docker push docker.pkg.github.com/hugomd/kutt/kutt
 
     - name: Save DigitalOcean kubeconfig

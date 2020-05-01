@@ -4,6 +4,9 @@ metadata:
   name: kutt
   namespace: kutt
 spec:
+  selector:
+    matchLabels:
+      app: kutt
   template:
     metadata:
       labels:
