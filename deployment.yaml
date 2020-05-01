@@ -1,0 +1,129 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kutt
+  namespace: kutt
+spec:
+  template:
+    metadata:
+      labels:
+        app: kutt
+    spec:
+      imagePullSecrets:
+      - name: github-registry
+      containers:
+      - image: docker.pkg.github.com/hugomd/kutt/kutt:<VERSION>
+        name: kutt
+        ports:
+        - containerPort: 3000
+        env:
+          - name: PORT
+            value: 3000
+          - name: SITE_NAME
+            value: "Kutt"
+          - name: DEFAULT_DOMAIN
+            value: "hu.md"
+          - name: DB_HOST
+            valueFrom:
+              secretKeyRef:
+                name: config
+                key: DB_HOST
+          - name: DB_PORT
+            valueFrom:
+              secretKeyRef:
+                name: config
+                key: DB_PORT
+          - name: DB_NAME
+            valueFrom:
+              secretKeyRef:
+                name: config
+                key: DB_NAME
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: config
+                key: DB_USER
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: config
+                key: DB_PASSWORD
+          - name: DB_SSL
+            value: true
+          - name: REDIS_HOST
+            value: "localhost"
+          - name: REDIS_PORT
+            value: 6379
+          - name: REDIS_PASSWORD
+            value: ""
+          - name: JWT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: config
+                key: JWT_SECRET
+          - name: ADMIN_EMAILS
+            valueFrom:
+              secretKeyRef:
+                name: config
+                key: ADMIN_EMAILS
+      - name: redis
+        image: redis
+        ports:
+          - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kutt
+  namespace: kutt
+spec:
+  selector:
+    app: kutt
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: kutt
+  namespace: kutt
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/tls-acme: "true"
+spec:
+  rules:
+  - host: hu.md
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: kutt
+          servicePort: 80
+  tls:
+    - secretName: kutt-tls-prod-cert
+      hosts:
+        - hu.md
+---
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: kutt-wildcard-tls-prod-cert
+  namespace: kutt
+spec:
+  secretName: kutt-tls-prod-cert
+  # duration: 2160h # 90d
+  # renewBefore: 2159h # 15d
+  commonName: hu.md
+  dnsNames:
+  - hu.md
+  uriSANs:
+  - spiffe://cluster.local/ns/sandbox/sa/example
+  issuerRef:
+    name: letsencrypt-prod
+    # We can reference ClusterIssuers by changing the kind here.
+    # The default value is Issuer (i.e. a locally namespaced Issuer)
+    kind: ClusterIssuer
