@@ -15,7 +15,7 @@ spec:
       imagePullSecrets:
       - name: github-registry
       containers:
-      - image: docker.pkg.github.com/hugomd/kutt/kutt:latest
+      - image: docker.pkg.github.com/hugomd/kutt/kutt:392c4fe
         name: kutt
         ports:
         - containerPort: 3000
@@ -25,7 +25,7 @@ spec:
           - name: SITE_NAME
             value: "Kutt"
           - name: DEFAULT_DOMAIN
-            value: "hu.md"
+            value: "kutt.ii.md"
           - name: DB_HOST
             valueFrom:
               secretKeyRef:
@@ -121,6 +121,31 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
+  name: dash-kutt
+  namespace: kutt
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/auth-url: "https://auth.ii.md/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://auth.ii.md/oauth2/start?rd=https%3A%2F%2F$host$request_uri"
+spec:
+  rules:
+  - host: kutt.ii.md
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: kutt
+          servicePort: 80
+  tls:
+    - secretName: dash-kutt-wildcard-tls-prod-cert
+      hosts:
+        - kutt.ii.md
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
   name: kutt
   namespace: kutt
   annotations:
@@ -137,22 +162,42 @@ spec:
           serviceName: kutt
           servicePort: 80
   tls:
-    - secretName: kutt-tls-prod-cert
+    - secretName: kutt-wildcard-tls-prod-cert
       hosts:
         - hu.md
 ---
 apiVersion: certmanager.k8s.io/v1alpha1
 kind: Certificate
 metadata:
-  name: kutt-wildcard-tls-prod-cert
+  name: kutt-tls-prod-cert
   namespace: kutt
 spec:
-  secretName: kutt-tls-prod-cert
+  secretName: kutt-wildcard-tls-prod-cert
   # duration: 2160h # 90d
   # renewBefore: 2159h # 15d
   commonName: hu.md
   dnsNames:
   - hu.md
+  uriSANs:
+  - spiffe://cluster.local/ns/sandbox/sa/example
+  issuerRef:
+    name: letsencrypt-prod
+    # We can reference ClusterIssuers by changing the kind here.
+    # The default value is Issuer (i.e. a locally namespaced Issuer)
+    kind: ClusterIssuer
+---
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: dash-kutt-tls-prod-cert
+  namespace: kutt
+spec:
+  secretName: dash-kutt-tls-prod-cert
+  # duration: 2160h # 90d
+  # renewBefore: 2159h # 15d
+  commonName: kutt.ii.md
+  dnsNames:
+  - kutt.ii.md
   uriSANs:
   - spiffe://cluster.local/ns/sandbox/sa/example
   issuerRef:
