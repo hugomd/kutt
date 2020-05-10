@@ -16,7 +16,7 @@ export async function up(knex: Knex): Promise<any> {
     `),
     knex.raw(`
       ALTER TABLE domains
-      ADD COLUMN IF NOT EXISTS uuid UUID NOT NULL
+      ADD COLUMN IF NOT EXISTS uuid UUID DEFAULT uuid_generate_v4()
     `)
   ]);
 }
