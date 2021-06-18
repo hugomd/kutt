@@ -139,7 +139,7 @@ spec:
           serviceName: kutt
           servicePort: 80
   tls:
-    - secretName: dash-kutt-wildcard-tls-prod-cert
+    - secretName: dash-kutt-tls-prod-cert
       hosts:
         - kutt.ii.md
 ---
